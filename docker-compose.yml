@@ -1,0 +1,27 @@
+services:
+  backend:
+    build: ./ai_interview_service
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./ai_interview_service:/app
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    networks:
+      - interview-network
+
+  frontend:
+    build: ./ai_interview_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./ai_interview_frontend:/app
+      - /app/node_modules
+    networks:
+      - interview-network
+    depends_on:
+      - backend
+
+networks:
+  interview-network:
+    driver: bridge
