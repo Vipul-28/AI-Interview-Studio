@@ -9,6 +9,8 @@ from util.file_util import extract_text, validate_file
 
 from services.github_service import fetch_github_context
 from services.email_service import send_invitation_email, send_report_email
+from services.auth_service import get_optional_recruiter
+from db.models import RecruiterUserDB
 
 router = APIRouter(
     prefix="/recruiter",
@@ -24,6 +26,7 @@ async def create_candidate_interview(
     candidate_email: Optional[str] = Form(None),
     github_url: Optional[str] = Form(None),
     resume: UploadFile = File(...),
+    current_recruiter: Optional[RecruiterUserDB] = Depends(get_optional_recruiter),
     db: Session = Depends(get_db)
 ):
     """
@@ -56,6 +59,7 @@ async def create_candidate_interview(
     final_name = candidate_name if candidate_name and candidate_name != "Candidate" else (detected_name or "Candidate")
 
     # 4. Persist session to SQLite database
+    recruiter_id = current_recruiter.recruiter_id if current_recruiter else None
     new_session = create_session(
         job_title=job_title,
         job_description=job_description,
@@ -66,6 +70,7 @@ async def create_candidate_interview(
         github_context=github_context,
         questions=ai_gen.get("questions", []),
         intro_text=ai_gen.get("introText", ""),
+        recruiter_id=recruiter_id,
         db=db
     )
 
@@ -95,9 +100,13 @@ async def create_candidate_interview(
 
 
 @router.get("/interviews")
-def list_all_interviews(db: Session = Depends(get_db)):
+def list_all_interviews(
+    current_recruiter: Optional[RecruiterUserDB] = Depends(get_optional_recruiter),
+    db: Session = Depends(get_db)
+):
     """Fetches all interview sessions for the recruiter dashboard."""
-    sessions = list_sessions(db)
+    recruiter_id = current_recruiter.recruiter_id if current_recruiter else None
+    sessions = list_sessions(recruiter_id=recruiter_id, db=db)
     return [
         {
             "session_id": s.session_id,

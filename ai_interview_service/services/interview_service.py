@@ -20,6 +20,7 @@ def create_session(
     github_context: Optional[str] = None,
     questions: Optional[List[str]] = None,
     intro_text: str = "",
+    recruiter_id: Optional[str] = None,
     db: Optional[Session] = None,
 ) -> InterviewSessionDB:
     """Creates and persists an interview session in the database."""
@@ -39,6 +40,7 @@ def create_session(
             resume_text=resume_text,
             github_url=github_url,
             github_context=github_context,
+            recruiter_id=recruiter_id,
             intro_text=intro_text,
             status="CREATED",
         )
@@ -71,7 +73,7 @@ def get_session(session_id: str, db: Optional[Session] = None) -> Optional[Inter
             db.close()
 
 
-def list_sessions(db: Optional[Session] = None) -> List[InterviewSessionDB]:
+def list_sessions(recruiter_id: Optional[str] = None, db: Optional[Session] = None) -> List[InterviewSessionDB]:
     """Fetches all interview sessions for the recruiter dashboard."""
     close_db = False
     if db is None:
@@ -79,7 +81,13 @@ def list_sessions(db: Optional[Session] = None) -> List[InterviewSessionDB]:
         close_db = True
 
     try:
-        return db.query(InterviewSessionDB).order_by(InterviewSessionDB.created_at.desc()).all()
+        query = db.query(InterviewSessionDB)
+        if recruiter_id:
+            query = query.filter(
+                (InterviewSessionDB.recruiter_id == recruiter_id) |
+                (InterviewSessionDB.recruiter_id.is_(None))
+            )
+        return query.order_by(InterviewSessionDB.created_at.desc()).all()
     finally:
         if close_db:
             db.close()

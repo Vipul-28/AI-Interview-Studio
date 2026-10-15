@@ -1,6 +1,6 @@
 from sqlalchemy import text
 from db.session import engine, Base
-from db.models import InterviewSessionDB
+from db.models import InterviewSessionDB, RecruiterUserDB
 
 
 def init_db():
@@ -16,6 +16,8 @@ def init_db():
                 conn.execute(text("ALTER TABLE interview_sessions ADD COLUMN github_url VARCHAR(500);"))
             if "github_context" not in columns:
                 conn.execute(text("ALTER TABLE interview_sessions ADD COLUMN github_context TEXT;"))
+            if "recruiter_id" not in columns:
+                conn.execute(text("ALTER TABLE interview_sessions ADD COLUMN recruiter_id VARCHAR(64);"))
             conn.commit()
     except Exception as e:
         print(f"[init_db] Migration check notice: {e}")

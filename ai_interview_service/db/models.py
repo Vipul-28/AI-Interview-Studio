@@ -16,6 +16,7 @@ class InterviewSessionDB(Base):
     resume_text = Column(Text, nullable=True)
     github_url = Column(String(500), nullable=True)
     github_context = Column(Text, nullable=True)
+    recruiter_id = Column(String(64), nullable=True, index=True)
 
     # JSON-serialized fields
     questions_json = Column(Text, default="[]")  # List of base questions
@@ -78,4 +79,16 @@ class InterviewSessionDB(Base):
     @introText.setter
     def introText(self, value: str):
         self.intro_text = value or ""
+
+
+class RecruiterUserDB(Base):
+    __tablename__ = "recruiter_users"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    recruiter_id = Column(String(64), unique=True, index=True, nullable=False)
+    name = Column(String(255), nullable=False)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    company_name = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
